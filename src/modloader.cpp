@@ -54,7 +54,7 @@ void modloader::preload(JNIEnv* env) noexcept {
     }
 
     LOG_VERBOSE("Calling modloader_preload");
-    preload(env, modloaderPath);
+    preload(env, modloaderPath.c_str());
 
     LOG_VERBOSE("Preloading done");
 }

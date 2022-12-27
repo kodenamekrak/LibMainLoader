@@ -10,7 +10,7 @@ namespace modloader {
     extern void* modloaderHandle;
     
     /*Called when modloader gets dlopened in JNI_OnLoad*/
-    using preload_t = void(JNIEnv* env, std::filesystem::path path) noexcept;
+    using preload_t = void(JNIEnv* env, const char* path) noexcept;
     /*Called before unity gets dlopened*/
     using load_t = void(JNIEnv* env) noexcept;
     /*Called after unity gets dlopened*/
