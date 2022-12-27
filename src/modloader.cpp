@@ -74,18 +74,18 @@ void modloader::load(JNIEnv* env) noexcept {
     LOG_VERBOSE("Loading done");
 }
 
-void modloader::init(JNIEnv* env) noexcept {
+void modloader::accept_unity_handle(JNIEnv* env, void* unityHandle) noexcept {
     if (modloaderHandle == nullptr) {
         LOG_WARN("Modloader not loaded!");
         return;
     }
-    auto init = reinterpret_cast<init_t*>(dlsym(modloaderHandle, "modloader_init"));
-    if (init == nullptr) {
-        LOG_WARN("Couldn't find modloader_init: %s", dlerror());
+    auto accept_unity_handle = reinterpret_cast<accept_unity_handle_t*>(dlsym(modloaderHandle, "modloader_accept_unity_handle"));
+    if (accept_unity_handle == nullptr) {
+        LOG_WARN("Couldn't find modloader_accept_unity_handle: %s", dlerror());
         return;
     }
-    LOG_VERBOSE("Calling modloader_init");
-    init(env);
+    LOG_VERBOSE("Calling modloader_accept_unity_handle");
+    accept_unity_handle(env, unityHandle);
     LOG_VERBOSE("Init done");
 }
 

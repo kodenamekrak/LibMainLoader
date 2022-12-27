@@ -49,7 +49,7 @@ jboolean jni::load(JNIEnv* env, jobject klass, jstring str) noexcept {
         }
     }
 
-    modloader::init(env);
+    modloader::accept_unity_handle(env, unityHandle);
 
     auto onload = reinterpret_cast<JNI_OnLoad_t*>(dlsym(unityHandle, "JNI_OnLoad"));
     if (onload != nullptr) {
