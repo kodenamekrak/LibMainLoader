@@ -7,7 +7,12 @@
 
 namespace fileutils {
 
-    std::optional<std::filesystem::path> getFilesDir(JNIEnv* env);
+    struct path_container {
+        std::filesystem::path filesDir;
+        std::filesystem::path externalDir;
+    };
+
+    std::optional<path_container> getDirs(JNIEnv* env);
     std::optional<std::string> getApplicationId();
 
 }

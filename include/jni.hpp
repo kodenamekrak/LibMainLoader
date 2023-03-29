@@ -4,7 +4,10 @@
 
 namespace jni {
 
-    constexpr const std::string_view unityName = "libunity.so";
+    // For sv literal
+    using namespace std::string_view_literals;
+
+    constexpr auto unityName = "libunity.so"sv;
     extern void* unityHandle;
 
     using JNI_OnLoad_t = jint(JavaVM*, void*);

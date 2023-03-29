@@ -1,7 +1,6 @@
 #include <array>
 
 #include "log.hpp"
-#include "main.hpp"
 #include "jni.hpp"
 #include "modloader.hpp"
 #include "fileutils.hpp"
