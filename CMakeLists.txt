@@ -29,7 +29,7 @@ set(ANDROID_PLATFORM 24)
 set(ANDROID_ABI arm64-v8a)
 set(ANDROID_STL c++_static)
 set(ANDROID_USE_LEGACY_TOOLCHAIN_FILE OFF)
-
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_TOOLCHAIN_FILE ${CMAKE_ANDROID_NDK}/build/cmake/android.toolchain.cmake)
 # define used for external data, mostly just the qpm dependencies
 set(EXTERN_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${EXTERN_DIR_NAME})
@@ -59,7 +59,7 @@ set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # compile options used
-add_compile_options(-frtti -fPIE -fPIC -fno-exceptions -O3)
+add_compile_options(-fPIE -flto -fPIC -fno-exceptions -O3 -Oz)
 
 # recursively get all src files
 RECURSE_FILES(cpp_file_list ${SOURCE_DIR}/*.cpp)

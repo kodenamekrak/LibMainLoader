@@ -3,8 +3,57 @@
 
 #include <jni.h>
 #include <ctype.h>
+#include <cstring>
 
 namespace fs = std::filesystem;
+
+namespace {
+char *trimWhitespace(char *str) {
+    char *end;
+    while(isspace((unsigned char)*str)) str++;
+    if(*str == 0)
+        return str;
+
+    end = str + strlen(str) - 1;
+    while(end > str && isspace((unsigned char)*end)) end--;
+
+    end[1] = '\0';
+
+    return str;
+}
+
+jobject getActivityFromUnityPlayerInternal(JNIEnv *env) {
+    jclass clazz = env->FindClass("com/unity3d/player/UnityPlayer");
+    if (clazz == NULL) return nullptr;
+    jfieldID actField = env->GetStaticFieldID(clazz, "currentActivity", "Landroid/app/Activity;");
+    if (actField == NULL) return nullptr;
+    return env->GetStaticObjectField(clazz, actField);
+}
+
+bool ensurePermsInternal(JNIEnv* env, jobject activity) {
+    // We only need the read permission here, since we need to copy over the modloader so we can open it. 
+    // That said, we should request for MANAGE because it gives us a bit more power (and the modloader will want it anyways)
+    jclass clazz = env->FindClass("com/unity3d/player/UnityPlayerActivity");
+    if (clazz == nullptr) return false;
+    jmethodID checkSelfPermission = env->GetMethodID(clazz, "checkSelfPermission", "(Ljava/lang/String;)I");
+    if (checkSelfPermission == nullptr) return false;
+    const jstring perm = env->NewStringUTF("android.permission.MANAGE_EXTERNAL_STORAGE");
+    jint hasPerm = env->CallIntMethod(activity, checkSelfPermission, perm);
+    LOG_DEBUG("checkSelfPermission(MANAGE_EXTERNAL_STORAGE) returned: %i", hasPerm);
+    if (hasPerm != 0) {
+        jmethodID requestPermissions = env->GetMethodID(clazz, "requestPermissions", "([Ljava/lang/String;I)V");
+        if (requestPermissions == nullptr) return false;
+        jclass stringClass = env->FindClass("java/lang/String");
+        jobjectArray arr = env->NewObjectArray(1, stringClass, perm);
+        constexpr jint requestCode = 21326; // arbitrary
+        LOG_INFO("Calling requestPermissions!");
+        env->CallVoidMethod(activity, requestPermissions, arr, requestCode);
+        if (env->ExceptionCheck()) return false;
+    }
+    return true;
+}
+
+}
 
 #define NULLOPT_UNLESS(expr, ...) ({ \
 auto&& __tmp = (expr); \
@@ -43,20 +92,6 @@ std::optional<fileutils::path_container> fileutils::getDirs(JNIEnv* env) {
     return result;
 }
 
-char *trimWhitespace(char *str) {
-    char *end;
-    while(isspace((unsigned char)*str)) str++;
-    if(*str == 0)
-        return str;
-
-    end = str + strlen(str) - 1;
-    while(end > str && isspace((unsigned char)*end)) end--;
-
-    end[1] = '\0';
-
-    return str;
-}
-
 std::optional<std::string> fileutils::getApplicationId() {
     FILE *cmdline = fopen("/proc/self/cmdline", "r");
     if (cmdline) {
@@ -70,3 +105,21 @@ std::optional<std::string> fileutils::getApplicationId() {
     return std::nullopt;
 }
 
+jobject fileutils::getActivityFromUnityPlayer(JNIEnv *env) {
+    jobject activity = getActivityFromUnityPlayerInternal(env);
+    if (activity == nullptr) {
+        if (env->ExceptionCheck()) env->ExceptionDescribe();
+        LOG_ERROR("libmain.getActivityFromUnityPlayer failed! See 'System.err' tag.");
+        env->ExceptionClear();
+    }
+    return activity;
+}
+
+bool fileutils::ensurePerms(JNIEnv* env, jobject activity) {
+    if (ensurePermsInternal(env, activity)) return true;
+
+    if (env->ExceptionCheck()) env->ExceptionDescribe();
+    LOG_ERROR("libmain.ensurePerms failed! See 'System.err' tag.");
+    env->ExceptionClear();
+    return false;
+}

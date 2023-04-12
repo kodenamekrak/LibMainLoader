@@ -1,16 +1,19 @@
 #include <array>
 
+#include "_config.h"
 #include "log.hpp"
 #include "jni.hpp"
 #include "modloader.hpp"
 #include "fileutils.hpp"
 
-#define EXPORT_FUNC extern "C" __attribute__((visibility("default")))
+#define EXPORT_FUNC extern "C" MAIN_EXPORT
 
+namespace {
 constexpr std::array<JNINativeMethod, 2> NativeLoader_bindings = {{
     { "load",   "(Ljava/lang/String;)Z", (void*)&jni::load   },
     { "unload", "()Z",                   (void*)&jni::unload }
 }};
+}
 
 EXPORT_FUNC jint JNI_OnLoad(JavaVM* vm, void*) {
     JNIEnv* env = nullptr;
@@ -24,8 +27,8 @@ EXPORT_FUNC jint JNI_OnLoad(JavaVM* vm, void*) {
 
     if (ret < 0) {
         LOG_ERROR("RegisterNatives failed with %d", ret);
-
-        env->FatalError("com/unity3d/player/NativeLoader"); // this is such a useless fucking error message because the original libmain does this
+        // this is such a useless error message because the original libmain does this
+        env->FatalError("com/unity3d/player/NativeLoader");
 
         return -1;
     }
@@ -40,4 +43,5 @@ EXPORT_FUNC jint JNI_OnLoad(JavaVM* vm, void*) {
 
 EXPORT_FUNC void JNI_OnUnload(JavaVM* vm, void*) {
     LOG_INFO("JNI_OnUnload called!");
+    modloader::unload(vm);
 }

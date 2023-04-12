@@ -7,9 +7,16 @@
 
 namespace fs = std::filesystem;
 
-void* modloader::modloaderHandle = nullptr;
+MAIN_LOCAL void* modloader::modloaderHandle = nullptr;
 
-void modloader::preload(JNIEnv* env) noexcept {
+MAIN_LOCAL void modloader::preload(JNIEnv* env) noexcept {
+    LOG_VERBOSE("preload: Attempting to acquire activity and permissions");
+    jobject activity = fileutils::getActivityFromUnityPlayer(env);
+    if (!activity) [[unlikely]] {
+        LOG_WARN("preload: Failed to find UnityPlayer activity!");
+    } else {
+        fileutils::ensurePerms(env, activity);
+    }
     LOG_VERBOSE("preload: Attempting to load modloader");
 
     auto applicationId = fileutils::getApplicationId();
@@ -51,12 +58,12 @@ void modloader::preload(JNIEnv* env) noexcept {
     }
 
     LOG_VERBOSE("preload: Calling %s", preloadName.data());
-    preload(env, modloaderPath.c_str(), pathContainer->filesDir.c_str(), pathContainer->externalDir.c_str());
+    preload(env, applicationId->c_str(), modloaderPath.c_str(), pathContainer->filesDir.c_str(), pathContainer->externalDir.c_str());
 
     LOG_VERBOSE("preload: Preloading done");
 }
 
-void modloader::load(JNIEnv* env) noexcept { 
+MAIN_LOCAL void modloader::load(JNIEnv* env, char const* soDir) noexcept { 
     if (modloaderHandle == nullptr) {
         LOG_WARN("load: Modloader not loaded!");
         return;
@@ -66,12 +73,12 @@ void modloader::load(JNIEnv* env) noexcept {
         LOG_WARN("load: Failed to find %s: %s", loadName.data(), dlerror());
         return;
     }
-    LOG_VERBOSE("load: Calling %s", loadName.data());
-    load(env);
+    LOG_VERBOSE("load: Calling %s with soDir: %s", loadName.data(), soDir);
+    load(env, soDir);
     LOG_VERBOSE("load: Loading done");
 }
 
-void modloader::accept_unity_handle(JNIEnv* env, void* unityHandle) noexcept {
+MAIN_LOCAL void modloader::accept_unity_handle(JNIEnv* env, void* unityHandle) noexcept {
     if (modloaderHandle == nullptr) {
         LOG_WARN("accept_unity_handle: Modloader not loaded!");
         return;
@@ -86,7 +93,7 @@ void modloader::accept_unity_handle(JNIEnv* env, void* unityHandle) noexcept {
     LOG_VERBOSE("accept_unity_handle: Init done");
 }
 
-void modloader::unload(JNIEnv* env) noexcept {
+MAIN_LOCAL void modloader::unload(JavaVM* vm) noexcept {
     if (modloaderHandle == nullptr) {
         LOG_WARN("unload: Modloader not loaded!");
         return;
@@ -97,6 +104,6 @@ void modloader::unload(JNIEnv* env) noexcept {
         return;
     }
     LOG_VERBOSE("unload: Calling %s", unloadName.data());
-    unload(env);
+    unload(vm);
     LOG_VERBOSE("unload: Unload done");
 }

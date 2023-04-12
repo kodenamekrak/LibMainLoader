@@ -9,9 +9,9 @@
 
 namespace fs = std::filesystem;
 
-void* jni::unityHandle = nullptr;
+MAIN_LOCAL void* jni::unityHandle = nullptr;
 
-jboolean jni::load(JNIEnv* env, jobject klass, jstring str) noexcept {
+MAIN_LOCAL jboolean jni::load(JNIEnv* env, jobject klass, jstring str) noexcept {
     if (unityHandle != nullptr)
         return true;
 
@@ -32,7 +32,7 @@ jboolean jni::load(JNIEnv* env, jobject klass, jstring str) noexcept {
 
     LOG_VERBOSE("Got JVM");
 
-    modloader::load(env);
+    modloader::load(env, path.c_str());
 
     path /= unityName;
     unityHandle = dlopen(path.c_str(), RTLD_LAZY);
@@ -67,7 +67,7 @@ jboolean jni::load(JNIEnv* env, jobject klass, jstring str) noexcept {
     return unityHandle != nullptr;
 }
 
-jboolean jni::unload(JNIEnv* env, jobject klass) noexcept {
+MAIN_LOCAL jboolean jni::unload(JNIEnv* env, jobject klass) noexcept {
     JavaVM* vm = nullptr;
 
     if (env->GetJavaVM(&vm) < 0) {
@@ -75,7 +75,7 @@ jboolean jni::unload(JNIEnv* env, jobject klass) noexcept {
         return false; // doesn't actually reach here
     }
 
-    modloader::unload(env);
+    modloader::unload(vm);
     
     auto onunload = reinterpret_cast<JNI_OnUnload_t*>(dlsym(unityHandle, "JNI_OnUnload"));
     if (onunload != nullptr) {
