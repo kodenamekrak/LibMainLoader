@@ -66,7 +66,7 @@ std::optional<fileutils::path_container> fileutils::getDirs(JNIEnv* env) {
     auto contextClass = NULLOPT_UNLESS(env->FindClass("android/content/Context"), "Failed to find android.context.Context!");
     auto getApplicationMethod = NULLOPT_UNLESS(env->GetMethodID(activityThreadClass, "getApplication", "()Landroid/app/Application;"), "Failed to find Application.getApplication");
     auto filesDirMethod = NULLOPT_UNLESS(env->GetMethodID(contextClass, "getFilesDir", "()Ljava/io/File;"), "Failed to find Context.getFilesDir()");
-    auto externalDirMethod = NULLOPT_UNLESS(env->GetMethodID(contextClass, "getExternalFilesDir", "(Ljava/lang/String)Ljava/io/File;"), "Failed to find Context.getExternalFilesDir(String)");
+    auto externalDirMethod = NULLOPT_UNLESS(env->GetMethodID(contextClass, "getExternalFilesDir", "(Ljava/lang/String;)Ljava/io/File;"), "Failed to find Context.getExternalFilesDir(String)");
     auto fileClass = NULLOPT_UNLESS(env->FindClass("java/io/File"), "Failed to find java.io.File!");
     auto absDirMethod = NULLOPT_UNLESS(env->GetMethodID(fileClass, "getAbsolutePath", "()Ljava/lang/String;"), "Failed to find File.getAbsolutePath()");
 
