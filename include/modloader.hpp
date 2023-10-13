@@ -7,19 +7,17 @@
 
 #include "_config.h"
 
-
 namespace modloader {
 
 // For sv literal
 using namespace std::string_view_literals;
 
-MAIN_LOCAL constexpr auto modloaderName = "libmodloader.so"sv;
 MAIN_LOCAL extern void* modloaderHandle;
 
 /// @brief Called after modloader gets dlopened in JNI_OnLoad.
 /// The lifetimes of pointers are within this call only and should be copied.
-using preload_t = void(JNIEnv* env, char const* appId, char const* modloaderPath, char const* filesDir,
-                       char const* externalDir) noexcept;
+using preload_t = void(JNIEnv* env, char const* appId, char const* modloaderPath, char const* modloaderSourcePath,
+                       char const* filesDir, char const* externalDir) noexcept;
 MAIN_LOCAL constexpr auto preloadName = "modloader_preload"sv;
 /// @brief Called before unity gets dlopened
 using load_t = void(JNIEnv* env, char const* soDir) noexcept;
