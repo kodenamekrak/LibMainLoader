@@ -9,15 +9,12 @@
 #include "log.hpp"
 #include "modloader.hpp"
 
-
 namespace fs = std::filesystem;
 
 MAIN_LOCAL void* jni::unityHandle = nullptr;
 
-MAIN_LOCAL jboolean jni::load(JNIEnv* env, jobject klass, jstring str) noexcept {
+MAIN_LOCAL jboolean jni::load(JNIEnv* env, [[maybe_unused]] jobject klass, jstring str) noexcept {
   if (unityHandle != nullptr) return true;
-
-  auto const directoryLength = env->GetStringUTFLength(str);
 
   auto chars = env->GetStringUTFChars(str, nullptr);
   fs::path path(chars);
@@ -69,7 +66,7 @@ MAIN_LOCAL jboolean jni::load(JNIEnv* env, jobject klass, jstring str) noexcept 
   return unityHandle != nullptr;
 }
 
-MAIN_LOCAL jboolean jni::unload(JNIEnv* env, jobject klass) noexcept {
+MAIN_LOCAL jboolean jni::unload(JNIEnv* env, [[maybe_unused]] jobject klass) noexcept {
   JavaVM* vm = nullptr;
 
   if (env->GetJavaVM(&vm) < 0) {
