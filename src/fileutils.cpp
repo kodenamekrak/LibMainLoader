@@ -1,5 +1,6 @@
 #include "fileutils.hpp"
 
+#include <android/api-level.h>
 #include <ctype.h>
 #include <jni.h>
 
@@ -58,6 +59,9 @@ bool ensurePermsWithAppId(JNIEnv* env, jobject activity, std::string_view applic
   ERR_CHECK(uriParse, env->GetStaticMethodID(uriClass, "parse", "(Ljava/lang/String;)Landroid/net/Uri;"));
   ERR_CHECK(envClass, env->FindClass("android/os/Environment"));
   ERR_CHECK(isExternalMethod, env->GetStaticMethodID(envClass, "isExternalStorageManager", "()Z"));
+  ERR_CHECK(checkSelfPermission, env->GetMethodID(clazz, "checkSelfPermission", "(Ljava/lang/String;)I"));
+  ERR_CHECK(requestPermissions, env->GetMethodID(clazz, "requestPermissions", "([Ljava/lang/String;I)V"));
+  ERR_CHECK(stringClass, env->FindClass("java/lang/String"));
 
   using namespace std::chrono_literals;
   // We loop the attempt to display permissions
@@ -67,6 +71,32 @@ bool ensurePermsWithAppId(JNIEnv* env, jobject activity, std::string_view applic
   // 2. If the delay is too excessive and causes the app to exit out from watchdog
   constexpr static auto kNumTries = 3;
   constexpr static auto kDelay = 5000ms;
+
+  {
+    const jstring perm = env->NewStringUTF("android.permission.WRITE_EXTERNAL_STORAGE");
+    const jstring perm2 = env->NewStringUTF("android.permission.MANAGE_EXTERNAL_STORAGE");
+    for (int i = 0; i < kNumTries; i++) {
+      LOG_DEBUG("Trial for permissions: %d/%d", i, kNumTries);
+      jint hasPerm = env->CallIntMethod(activity, checkSelfPermission, perm);
+      LOG_DEBUG("checkSelfPermission(WRITE_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE) returned: %i", hasPerm);
+      if (hasPerm != 0) {
+        jobjectArray arr = env->NewObjectArray(2, stringClass, perm);
+        env->SetObjectArrayElement(arr, 1, perm2);
+        jint requestCode = 21326;  // the number in the alphabet for each letter in BMBF (B=2, M=13, F=6)
+        LOG_INFO("Calling requestPermissions for WRITE_EXTERNAL_STORAGE, MANAGE_EXTERNAL_STORAGE!");
+        env->CallVoidMethod(activity, requestPermissions, arr, requestCode);
+        if (env->ExceptionCheck()) return false;
+      } else {
+        LOG_DEBUG("Permission is accepted!");
+        break;
+      }
+      std::this_thread::sleep_for(kDelay);
+    }
+  }
+  // Extra permission not needed on older android versions and our method to obtain it does not work
+  if(android_get_device_api_level() < 30) {
+    return !env->ExceptionCheck();
+  }
 
   for (int i = 0; i < kNumTries; i++) {
     auto result = env->CallStaticBooleanMethod(envClass, isExternalMethod);
