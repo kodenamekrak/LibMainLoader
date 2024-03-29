@@ -52,13 +52,6 @@ jobject getActivityFromUnityPlayerInternal(JNIEnv* env) {
 }
 bool ensurePermsWithAppId(JNIEnv* env, jobject activity, std::string_view application_id) {
   ERR_CHECK(clazz, env->FindClass("com/unity3d/player/UnityPlayerActivity"));
-  ERR_CHECK(intentClass, env->FindClass("android/content/Intent"));
-  ERR_CHECK(intentCtorID, env->GetMethodID(intentClass, "<init>", "(Ljava/lang/String;Landroid/net/Uri;)V"));
-  ERR_CHECK(startActivity, env->GetMethodID(clazz, "startActivity", "(Landroid/content/Intent;)V"));
-  ERR_CHECK(uriClass, env->FindClass("android/net/Uri"));
-  ERR_CHECK(uriParse, env->GetStaticMethodID(uriClass, "parse", "(Ljava/lang/String;)Landroid/net/Uri;"));
-  ERR_CHECK(envClass, env->FindClass("android/os/Environment"));
-  ERR_CHECK(isExternalMethod, env->GetStaticMethodID(envClass, "isExternalStorageManager", "()Z"));
   ERR_CHECK(checkSelfPermission, env->GetMethodID(clazz, "checkSelfPermission", "(Ljava/lang/String;)I"));
   ERR_CHECK(requestPermissions, env->GetMethodID(clazz, "requestPermissions", "([Ljava/lang/String;I)V"));
   ERR_CHECK(stringClass, env->FindClass("java/lang/String"));
@@ -97,6 +90,14 @@ bool ensurePermsWithAppId(JNIEnv* env, jobject activity, std::string_view applic
   if(android_get_device_api_level() < 30) {
     return !env->ExceptionCheck();
   }
+
+  ERR_CHECK(intentClass, env->FindClass("android/content/Intent"));
+  ERR_CHECK(intentCtorID, env->GetMethodID(intentClass, "<init>", "(Ljava/lang/String;Landroid/net/Uri;)V"));
+  ERR_CHECK(startActivity, env->GetMethodID(clazz, "startActivity", "(Landroid/content/Intent;)V"));
+  ERR_CHECK(uriClass, env->FindClass("android/net/Uri"));
+  ERR_CHECK(uriParse, env->GetStaticMethodID(uriClass, "parse", "(Ljava/lang/String;)Landroid/net/Uri;"));
+  ERR_CHECK(envClass, env->FindClass("android/os/Environment"));
+  ERR_CHECK(isExternalMethod, env->GetStaticMethodID(envClass, "isExternalStorageManager", "()Z"));
 
   for (int i = 0; i < kNumTries; i++) {
     auto result = env->CallStaticBooleanMethod(envClass, isExternalMethod);
