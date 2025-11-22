@@ -144,7 +144,9 @@ std::optional<fileutils::path_container> fileutils::getDirs(JNIEnv* env, std::st
   // Construct the path to the modloader here, as there's no point in attempting to load if we can't get the other dirs
   // as well
   fileutils::path_container result{.modloaderSearchPath =
-                                       std::filesystem::absolute("/sdcard/ModData"_fp / application_id / "Modloader")};
+                                       std::filesystem::absolute("/sdcard/ModData"_fp / application_id / "Modloader"),
+                                      .filesDir{},
+                                    .externalDir{}};
 
   ERR_CHECK(at, env->CallStaticObjectMethod(activityThreadClass, currentActivityThreadMethod));
   ERR_CHECK(context, env->CallObjectMethod(at, getApplicationMethod));
