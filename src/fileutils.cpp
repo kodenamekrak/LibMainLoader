@@ -52,7 +52,12 @@ jobject getActivityFromUnityPlayerInternal(JNIEnv* env) {
 }
 
 bool ensurePermsWithAppId(JNIEnv* env, jobject activity, std::string_view application_id) {
-  ERR_CHECK(clazz, env->FindClass("com/unity3d/player/UnityPlayerActivity"));
+  auto clazz = env->FindClass("com/unity3d/player/UnityPlayerActivity");
+  if(!clazz) {
+    env->ExceptionClear();
+    ERR_CHECK(clazz2, env->FindClass("com/unity3d/player/UnityPlayerGameActivity"));
+    clazz = clazz2;
+  }
   ERR_CHECK(checkSelfPermission, env->GetMethodID(clazz, "checkSelfPermission", "(Ljava/lang/String;)I"));
   ERR_CHECK(requestPermissions, env->GetMethodID(clazz, "requestPermissions", "([Ljava/lang/String;I)V"));
   ERR_CHECK(stringClass, env->FindClass("java/lang/String"));
